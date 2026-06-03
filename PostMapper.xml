@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    PostMapper.xml - 帖子数据访问映射器
+    
+    功能说明：
+    - 管理帖子的增删改查操作
+    - 支持按分类、作者、标题关键词查询
+    - 支持帖子统计数据更新（点赞、评论、收藏、举报数）
+    - 支持帖子权重排序和状态管理
+-->
+<mapper namespace="com.insightforge.mapper.PostMapper">
+
+    <!-- 帖子结果映射：将数据库字段映射到Post实体类属性 -->
+    <resultMap id="postResultMap" type="com.insightforge.entity.Post">
+        <id property="id" column="id"/>                          <!-- 帖子ID，主键 -->
+        <result property="title" column="title"/>                <!-- 帖子标题 -->
+        <result property="content" column="content"/>            <!-- 帖子内容 -->
+        <result property="category" column="category"/>          <!-- 帖子分类 -->
+        <result property="authorId" column="author_id"/>         <!-- 作者ID -->
+        <result property="status" column="status"/>              <!-- 帖子状态（PUBLISHED/DRAFT/HIDDEN等） -->
+        <result property="likeCount" column="like_count"/>       <!-- 点赞数 -->
+        <result property="commentCount" column="comment_count"/> <!-- 评论数 -->
+        <result property="saveCount" column="save_count"/>        <!-- 收藏数 -->
+        <result property="reportCount" column="report_count"/>    <!-- 举报数 -->
+        <result property="weight" column="weight"/>              <!-- 权重（用于排序推荐） -->
+        <result property="createdAt" column="created_at"/>       <!-- 创建时间 -->
+        <result property="updatedAt" column="updated_at"/>       <!-- 更新时间 -->
+        <result property="authorName" column="author_name"/>      <!-- 作者用户名（关联查询） -->
+    </resultMap>
+
+    <!-- 根据ID查询帖子详情，关联查询作者用户名 -->
+    <select id="findById" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        WHERE p.id = #{id}
+    </select>
+
+    <!-- 查询所有已发布的帖子，按创建时间倒序 -->
+    <select id="findAll" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        WHERE p.status = 'PUBLISHED'
+        ORDER BY p.created_at DESC
+    </select>
+
+    <!-- 管理员查询所有帖子（包含未发布），按创建时间倒序 -->
+    <select id="findAllAdmin" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        ORDER BY p.created_at DESC
+    </select>
+
+    <!-- 根据分类查询已发布的帖子 -->
+    <select id="findByCategory" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        WHERE p.category = #{category} AND p.status = 'PUBLISHED'
+    </select>
+
+    <!-- 根据作者ID查询帖子（包含所有状态） -->
+    <select id="findByAuthorId" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        WHERE p.author_id = #{authorId}
+    </select>
+
+    <!-- 根据标题关键词模糊搜索已发布的帖子 -->
+    <select id="searchByTitle" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        WHERE p.title LIKE CONCAT('%', #{keyword}, '%') AND p.status = 'PUBLISHED'
+    </select>
+
+    <!-- 查询已发布的帖子，按权重降序排列（用于推荐排序） -->
+    <select id="findAllOrderByWeight" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        WHERE p.status = 'PUBLISHED'
+        ORDER BY p.weight DESC
+    </select>
+
+    <!-- 查询最新发布的N条帖子 -->
+    <select id="findLatest" resultMap="postResultMap">
+        SELECT p.id, p.title, p.content, p.category, p.author_id, p.status,
+               p.like_count, p.comment_count, p.save_count, p.report_count,
+               p.weight, p.created_at, p.updated_at,
+               u.username AS author_name
+        FROM posts p
+        JOIN users u ON p.author_id = u.id
+        WHERE p.status = 'PUBLISHED'
+        ORDER BY p.created_at DESC
+        LIMIT #{limit}
+    </select>
+
+    <!-- 新增帖子，useGeneratedKeys返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO posts (title, content, category, author_id, status,
+                           like_count, comment_count, save_count, report_count, weight)
+        VALUES (#{title}, #{content}, #{category}, #{authorId}, #{status},
+                #{likeCount}, #{commentCount}, #{saveCount}, #{reportCount}, #{weight})
+    </insert>
+
+    <!-- 更新帖子基本信息 -->
+    <update id="update">
+        UPDATE posts
+        SET title = #{title},
+            content = #{content},
+            category = #{category},
+            status = #{status},
+            updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新帖子状态（用于审核、隐藏等操作） -->
+    <update id="updateStatus">
+        UPDATE posts
+        SET status = #{status}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 点赞数加1 -->
+    <update id="incrementLikeCount">
+        UPDATE posts
+        SET like_count = like_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 点赞数减1 -->
+    <update id="decrementLikeCount">
+        UPDATE posts
+        SET like_count = like_count - 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 评论数加1 -->
+    <update id="incrementCommentCount">
+        UPDATE posts
+        SET comment_count = comment_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 收藏数加1 -->
+    <update id="incrementSaveCount">
+        UPDATE posts
+        SET save_count = save_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 收藏数减1 -->
+    <update id="decrementSaveCount">
+        UPDATE posts
+        SET save_count = save_count - 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 举报数加1 -->
+    <update id="incrementReportCount">
+        UPDATE posts
+        SET report_count = report_count + 1
+        WHERE id = #{id}
+    </update>
+
+    <!-- 更新帖子权重（用于推荐算法） -->
+    <update id="updateWeight">
+        UPDATE posts
+        SET weight = #{weight}, updated_at = CURRENT_TIMESTAMP
+        WHERE id = #{id}
+    </update>
+
+    <!-- 根据ID删除帖子 -->
+    <delete id="deleteById">
+        DELETE FROM posts
+        WHERE id = #{id}
+    </delete>
+
+</mapper>
