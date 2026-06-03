@@ -2,54 +2,96 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <!-- Maven项目对象模型版本 -->
     <modelVersion>4.0.0</modelVersion>
 
+    <!-- ========================================
+         父项目配置
+         ======================================== -->
+    <!-- 继承Spring Boot父项目，获得默认配置和依赖管理 -->
     <parent>
+        <!-- Spring Boot组织标识 -->
         <groupId>org.springframework.boot</groupId>
+        <!-- Spring Boot启动器父项目 -->
         <artifactId>spring-boot-starter-parent</artifactId>
+        <!-- Spring Boot版本号 -->
         <version>3.2.0</version>
+        <!-- 空值表示从Maven仓库获取父项目，不从本地路径查找 -->
         <relativePath/>
     </parent>
 
+    <!-- ========================================
+         项目基本信息
+         ======================================== -->
+    <!-- 项目组织标识，通常使用反向域名 -->
     <groupId>com.insightforge</groupId>
+    <!-- 项目唯一标识符 -->
     <artifactId>insightforge</artifactId>
+    <!-- 项目版本号 -->
     <version>1.0.0</version>
+    <!-- 打包类型：jar表示打包为可执行JAR文件 -->
     <packaging>jar</packaging>
+    <!-- 项目显示名称 -->
     <name>InsightForge Knowledge Feed Platform</name>
 
+    <!-- ========================================
+         项目属性配置
+         ======================================== -->
     <properties>
+        <!-- Java版本配置，要求JDK 17或更高版本 -->
         <java.version>17</java.version>
     </properties>
 
+    <!-- ========================================
+         项目依赖配置
+         ======================================== -->
     <dependencies>
+        <!-- Spring Boot Web启动器
+             包含：Spring MVC、Tomcat、Jackson等
+             用于构建RESTful Web服务和Web应用 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!-- Thymeleaf模板引擎启动器
+             用于服务端渲染HTML页面
+             支持模板布局、国际化等功能 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
         </dependency>
 
+        <!-- MyBatis Spring Boot启动器
+             提供MyBatis与Spring Boot的集成
+             版本3.0.3支持Spring Boot 3.x -->
         <dependency>
             <groupId>org.mybatis.spring.boot</groupId>
             <artifactId>mybatis-spring-boot-starter</artifactId>
             <version>3.0.3</version>
         </dependency>
 
+        <!-- H2嵌入式数据库
+             轻量级内存/文件数据库，适合开发和测试
+             runtime作用域表示运行时需要，编译时不需要 -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Spring Boot测试启动器
+             包含JUnit、Mockito等测试框架
+             test作用域表示仅在测试时使用 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
             <scope>test</scope>
         </dependency>
 
+        <!-- Spring Boot开发者工具
+             提供热部署、自动重启等开发便利功能
+             optional表示该依赖不会传递给依赖此项目的其他项目 -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -57,6 +99,9 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- CommonMark Java库
+             用于解析和渲染Markdown文本
+             版本0.21.0提供Markdown到HTML的转换功能 -->
         <dependency>
             <groupId>org.commonmark</groupId>
             <artifactId>commonmark</artifactId>
@@ -64,8 +109,14 @@
         </dependency>
     </dependencies>
 
+    <!-- ========================================
+         构建配置
+         ======================================== -->
     <build>
         <plugins>
+            <!-- Spring Boot Maven插件
+                 提供打包可执行JAR、运行应用等功能
+                 继承自父项目，无需额外配置版本 -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
