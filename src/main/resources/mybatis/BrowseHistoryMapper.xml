@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    BrowseHistoryMapper.xml - 浏览历史数据访问映射器
+    
+    功能说明：
+    - 管理用户浏览历史记录的增删改查操作
+    - 支持按用户ID查询浏览历史
+    - 按浏览时间倒序排列
+-->
+<mapper namespace="com.insightforge.mapper.BrowseHistoryMapper">
+
+    <!-- 浏览历史结果映射：将数据库字段映射到BrowseHistory实体类属性 -->
+    <resultMap id="browseHistoryResultMap" type="com.insightforge.entity.BrowseHistory">
+        <id property="id" column="id"/>                      <!-- 浏览记录ID，主键 -->
+        <result property="userId" column="user_id"/>        <!-- 浏览用户ID -->
+        <result property="postId" column="post_id"/>        <!-- 被浏览的帖子ID -->
+        <result property="createdAt" column="created_at"/>  <!-- 浏览时间 -->
+    </resultMap>
+
+    <!-- 根据用户ID查询浏览历史，按浏览时间倒序排列（最近浏览的在前） -->
+    <select id="findByUserId" resultMap="browseHistoryResultMap">
+        SELECT id, user_id, post_id, created_at
+        FROM browse_history
+        WHERE user_id = #{userId}
+        ORDER BY created_at DESC
+    </select>
+
+    <!-- 新增浏览历史记录，useGeneratedKeys返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO browse_history (user_id, post_id)
+        VALUES (#{userId}, #{postId})
+    </insert>
+
+</mapper>

@@ -1,0 +1,438 @@
+<!--
+  ============================================================
+  页面名称：用户设置页面 (user-settings.html)
+  页面功能：用户个人设置和账户信息管理
+  主要内容：
+    - 用户信息展示：显示用户头像、用户名、邮箱、信誉分等
+    - 账户信息卡片：展示当前账户详细信息
+    - 编辑资料表单：修改邮箱和密码
+    - 成功提示：设置更新成功后显示提示消息
+  使用技术：Thymeleaf模板引擎 + Bootstrap 5框架
+  ============================================================
+-->
+<!DOCTYPE html>
+<!-- HTML文档声明，设置语言为中文，引入Thymeleaf命名空间 -->
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <!-- 字符编码设置 -->
+  <meta charset="UTF-8">
+  <!-- 视口设置，确保移动端响应式布局 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- th:text：动态设置页面标题，显示用户名 -->
+  <title th:text="${user.username} + ' - Settings - InsightForge'">User Settings - InsightForge</title>
+  <!-- 引入Bootstrap 5 CSS框架 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- 引入Bootstrap Icons图标库 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <!-- ==================== CSS样式定义 ==================== -->
+  <style>
+    /* ---------- CSS变量定义：全局颜色主题 ---------- */
+    :root {
+      --primary-dark: #1a2a4a;    /* 主色调深色 */
+      --primary: #1e3a6e;         /* 主色调 */
+      --primary-light: #2c5aa0;   /* 主色调浅色 */
+      --accent: #4a8fe7;          /* 强调色 */
+      --bg-light: #f5f7fa;        /* 浅色背景 */
+      --white: #ffffff;           /* 白色 */
+      --text-dark: #1a1a2e;       /* 深色文字 */
+      --text-muted: #6c757d;      /* 灰色文字 */
+      --border: #dee2e6;          /* 边框颜色 */
+      --danger: #dc3545;          /* 危险色（红色） */
+      --success: #198754;         /* 成功色（绿色） */
+    }
+
+    /* ---------- 页面主体样式 ---------- */
+    body {
+      background-color: var(--bg-light);  /* 浅色背景 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-dark);            /* 深色文字 */
+      min-height: 100vh;                  /* 最小高度为视口高度 */
+      display: flex;                      /* 弹性布局 */
+      flex-direction: column;             /* 垂直方向排列 */
+    }
+
+    /* ---------- 导航栏样式 ---------- */
+    .navbar-custom {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));  /* 渐变背景 */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);                                 /* 阴影效果 */
+    }
+
+    /* 导航栏品牌标识样式 */
+    .navbar-custom .navbar-brand {
+      font-weight: 700;          /* 加粗字体 */
+      font-size: 1.5rem;         /* 字体大小 */
+      color: var(--white) !important;  /* 白色文字 */
+      letter-spacing: 0.5px;     /* 字间距 */
+    }
+
+    /* 导航栏品牌图标样式 */
+    .navbar-custom .navbar-brand i {
+      color: var(--accent);      /* 强调色 */
+      margin-right: 6px;         /* 右侧间距 */
+    }
+
+    /* 导航栏链接样式 */
+    .navbar-custom .nav-link {
+      color: rgba(255, 255, 255, 0.85) !important;  /* 半透明白色 */
+      font-weight: 500;                             /* 中等字重 */
+      transition: color 0.2s;                       /* 颜色过渡动画 */
+      padding: 0.5rem 1rem;                         /* 内边距 */
+    }
+
+    /* 导航栏链接悬停样式 */
+    .navbar-custom .nav-link:hover {
+      color: var(--white) !important;  /* 悬停时变为纯白色 */
+    }
+
+    /* 导航栏链接图标样式 */
+    .navbar-custom .nav-link i {
+      margin-right: 4px;  /* 图标右侧间距 */
+    }
+
+    /* 导航栏折叠按钮样式 */
+    .navbar-custom .navbar-toggler {
+      border-color: rgba(255, 255, 255, 0.5);  /* 半透明白色边框 */
+    }
+
+    /* 导航栏折叠按钮图标样式 */
+    .navbar-custom .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* ---------- 主内容区域样式 ---------- */
+    .main-content {
+      flex: 1;                    /* 占据剩余空间 */
+      padding-top: 1.5rem;        /* 顶部内边距 */
+      padding-bottom: 3rem;       /* 底部内边距 */
+    }
+
+    /* ---------- 页脚样式 ---------- */
+    .footer-custom {
+      background: var(--primary-dark);           /* 深色背景 */
+      color: rgba(255, 255, 255, 0.7);           /* 半透明白色文字 */
+      padding: 1rem 0;                           /* 内边距 */
+      text-align: center;                        /* 居中对齐 */
+      font-size: 0.875rem;                       /* 字体大小 */
+      margin-top: auto;                          /* 自动顶部外边距 */
+    }
+
+    /* ---------- 用户头像圆形样式 ---------- */
+    .avatar-circle {
+      display: inline-flex;       /* 行内弹性布局 */
+      align-items: center;        /* 垂直居中 */
+      justify-content: center;    /* 水平居中 */
+      width: 34px;                /* 宽度 */
+      height: 34px;               /* 高度 */
+      border-radius: 50%;         /* 圆形 */
+      background: var(--accent);  /* 强调色背景 */
+      color: var(--white);        /* 白色文字 */
+      font-weight: 700;           /* 加粗 */
+      font-size: 1rem;            /* 字体大小 */
+      text-transform: uppercase;  /* 大写字母 */
+      flex-shrink: 0;             /* 不收缩 */
+    }
+
+    /* 下拉菜单中的头像样式 */
+    .nav-link.dropdown-toggle .avatar-circle {
+      width: 36px;
+      height: 36px;
+      font-size: 1.1rem;
+    }
+
+    /* ---------- 下拉菜单样式 ---------- */
+    .dropdown-menu-end {
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+      padding: 0.5rem 0;
+    }
+
+    /* 下拉菜单项样式 */
+    .dropdown-menu-end .dropdown-item {
+      padding: 0.5rem 1.25rem;
+      font-size: 0.9rem;
+      transition: background 0.15s;
+    }
+
+    .dropdown-menu-end .dropdown-item i {
+      margin-right: 0.5rem;
+      width: 18px;
+      text-align: center;
+    }
+
+    .dropdown-menu-end .dropdown-item:hover {
+      background: var(--bg-light);
+    }
+
+    /* 下拉菜单标题样式 */
+    .dropdown-menu-end .dropdown-header {
+      font-weight: 600;
+      color: var(--primary-dark);
+      font-size: 0.85rem;
+      padding: 0.5rem 1.25rem;
+    }
+
+    /* ---------- 设置容器样式 ---------- */
+    .settings-container {
+      max-width: 800px;           /* 最大宽度 */
+      margin: 0 auto;             /* 居中 */
+    }
+
+    /* ---------- 设置头部样式 ---------- */
+    .settings-header {
+      text-align: center;         /* 居中对齐 */
+      margin-bottom: 2rem;        /* 底部外边距 */
+    }
+
+    /* 设置页面头像样式 */
+    .settings-avatar {
+      width: 88px;                /* 宽度 */
+      height: 88px;               /* 高度 */
+      border-radius: 50%;         /* 圆形 */
+      background: linear-gradient(135deg, var(--accent), var(--primary-light));  /* 渐变背景 */
+      color: var(--white);        /* 白色文字 */
+      font-weight: 700;           /* 加粗 */
+      font-size: 2.2rem;          /* 字体大小 */
+      display: inline-flex;       /* 行内弹性布局 */
+      align-items: center;        /* 垂直居中 */
+      justify-content: center;    /* 水平居中 */
+      text-transform: uppercase;  /* 大写字母 */
+      margin-bottom: 1rem;        /* 底部外边距 */
+      box-shadow: 0 4px 16px rgba(74, 143, 231, 0.3);  /* 阴影效果 */
+    }
+
+    /* ---------- 设置卡片样式 ---------- */
+    .settings-card {
+      background: var(--white);           /* 白色背景 */
+      border: 1px solid var(--border);    /* 边框 */
+      border-radius: 12px;                /* 圆角 */
+      padding: 2rem;                      /* 内边距 */
+      margin-bottom: 1.5rem;              /* 底部外边距 */
+    }
+
+    /* 设置卡片标题样式 */
+    .settings-card .card-title {
+      font-weight: 700;                   /* 加粗 */
+      color: var(--primary-dark);         /* 深主色调 */
+      margin-bottom: 1.25rem;             /* 底部外边距 */
+      padding-bottom: 0.75rem;            /* 底部内边距 */
+      border-bottom: 2px solid var(--accent);  /* 底部边框 */
+      font-size: 1.1rem;                  /* 字体大小 */
+    }
+
+    /* ---------- 信息行样式 ---------- */
+    .info-row {
+      display: flex;              /* 弹性布局 */
+      align-items: center;        /* 垂直居中 */
+      padding: 0.75rem 0;         /* 内边距 */
+      border-bottom: 1px solid #f0f0f0;  /* 底部边框 */
+    }
+
+    /* 最后一个信息行去除底部边框 */
+    .info-row:last-child {
+      border-bottom: none;
+    }
+
+    /* 信息标签样式 */
+    .info-label {
+      width: 140px;               /* 固定宽度 */
+      font-weight: 600;           /* 半粗体 */
+      color: var(--text-muted);   /* 灰色文字 */
+      font-size: 0.9rem;          /* 字体大小 */
+      flex-shrink: 0;             /* 不收缩 */
+    }
+
+    /* 信息标签图标样式 */
+    .info-label i {
+      width: 20px;                /* 固定宽度 */
+      margin-right: 6px;          /* 右侧间距 */
+      color: var(--primary-light); /* 浅主色调 */
+    }
+
+    /* 信息值样式 */
+    .info-value {
+      color: var(--text-dark);    /* 深色文字 */
+      font-weight: 500;           /* 中等字重 */
+      font-size: 0.95rem;         /* 字体大小 */
+    }
+
+    /* ---------- 信誉分徽章样式 ---------- */
+    .reputation-badge {
+      display: inline-flex;       /* 行内弹性布局 */
+      align-items: center;        /* 垂直居中 */
+      background: linear-gradient(135deg, #f1c40f, #e67e22);  /* 金色渐变背景 */
+      color: #fff;                /* 白色文字 */
+      font-weight: 700;           /* 加粗 */
+      padding: 2px 12px;          /* 内边距 */
+      border-radius: 20px;        /* 圆角 */
+      font-size: 0.85rem;         /* 字体大小 */
+    }
+
+    .reputation-badge i {
+      margin-right: 4px;          /* 图标右侧间距 */
+    }
+
+    /* ---------- 表单控件聚焦样式 ---------- */
+    .form-control:focus,
+    .form-select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.2rem rgba(74, 143, 231, 0.25);
+    }
+
+    /* ---------- 自定义按钮样式 ---------- */
+    .btn-primary-custom {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .btn-primary-custom:hover {
+      background: var(--primary-light);
+      border-color: var(--primary-light);
+      color: var(--white);
+    }
+
+    /* ---------- 表单标签样式 ---------- */
+    .form-label {
+      font-weight: 600;           /* 半粗体 */
+      color: var(--text-dark);    /* 深色文字 */
+      font-size: 0.9rem;          /* 字体大小 */
+    }
+
+    /* 表单提示文字样式 */
+    .form-text-muted {
+      font-size: 0.8rem;          /* 字体大小 */
+      color: var(--text-muted);   /* 灰色文字 */
+    }
+
+    /* ---------- 成功提示样式 ---------- */
+    .alert-success {
+      border-radius: 8px;         /* 圆角 */
+      font-size: 0.9rem;          /* 字体大小 */
+    }
+
+    /* ---------- 全局链接样式 ---------- */
+    a {
+      color: var(--primary);
+    }
+
+    a:hover {
+      color: var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== 引入导航栏片段 ==================== -->
+<!-- th:replace：替换为layout模板中的navbar片段 -->
+<th:block th:replace="~{layout :: navbar}"></th:block>
+
+<!-- ==================== 主内容区域 ==================== -->
+<div class="main-content">
+  <div class="container settings-container">
+    <!-- ---------- 设置页面头部 ---------- -->
+    <div class="settings-header">
+      <!-- 用户头像：显示用户名首字母 -->
+      <!-- #strings.substring：截取用户名首字母 -->
+      <div class="settings-avatar" th:text="${user.username != null ? #strings.substring(user.username, 0, 1) : 'U'}">U</div>
+      <!-- 用户名 -->
+      <h4 class="fw-bold" th:text="${user.username}">Username</h4>
+      <!-- 注册时间 -->
+      <!-- th:if：当创建时间不为空时显示 -->
+      <p class="text-muted" th:text="'Joined ' + ${#temporals.format(user.createdAt, 'yyyy-MM-dd')}" th:if="${user.createdAt != null}">Joined date</p>
+    </div>
+
+    <!-- ---------- 成功提示消息 ---------- -->
+    <!-- th:if：当success不为空时显示成功提示 -->
+    <div class="alert alert-success d-flex align-items-center" role="alert" th:if="${success != null}">
+      <i class="bi bi-check-circle-fill me-2"></i>
+      <!-- th:text：显示服务器传递的成功信息 -->
+      <span th:text="${success}">Success message</span>
+    </div>
+
+    <!-- ---------- 账户信息卡片 ---------- -->
+    <div class="settings-card">
+      <h6 class="card-title"><i class="bi bi-info-circle"></i> Account Information</h6>
+      <!-- 用户名信息行 -->
+      <div class="info-row">
+        <span class="info-label"><i class="bi bi-person"></i> Username</span>
+        <span class="info-value" th:text="${user.username}">username</span>
+      </div>
+      <!-- 邮箱信息行 -->
+      <div class="info-row">
+        <span class="info-label"><i class="bi bi-envelope"></i> <span th:text="#{userSettings.email}">Email</span></span>
+        <!-- ?: Elvis运算符，提供默认值 -->
+        <span class="info-value" th:text="${user.email} ?: 'Not set'">email</span>
+      </div>
+      <!-- 信誉分信息行 -->
+      <div class="info-row">
+        <span class="info-label"><i class="bi bi-star-fill"></i> Reputation</span>
+        <!-- 信誉分徽章 -->
+        <span class="reputation-badge">
+          <i class="bi bi-star-fill"></i>
+          <span th:text="${user.reputation} ?: 0">0</span>
+        </span>
+      </div>
+      <!-- 注册时间信息行 -->
+      <div class="info-row">
+        <span class="info-label"><i class="bi bi-calendar3"></i> <span th:text="#{userSettings.memberSince}">Member Since</span></span>
+        <!-- #temporals.format：日期格式化 -->
+        <span class="info-value" th:text="${user.createdAt != null ? #temporals.format(user.createdAt, 'yyyy-MM-dd HH:mm') : '-'}">-</span>
+      </div>
+    </div>
+
+    <!-- ---------- 编辑资料卡片 ---------- -->
+    <div class="settings-card">
+      <h6 class="card-title"><i class="bi bi-pencil-square"></i> Edit Profile</h6>
+      <!-- th:action：表单提交地址 -->
+      <form th:action="@{/user/settings}" method="post">
+        <!-- 邮箱输入 -->
+        <div class="mb-3">
+          <label for="email" class="form-label">
+            <i class="bi bi-envelope"></i> <span th:text="#{userSettings.emailAddress}">Email Address</span>
+          </label>
+          <!-- th:value：预填充当前邮箱值 -->
+          <input type="email" class="form-control" id="email" name="email"
+                 th:value="${user.email}" placeholder="Enter your email address" required>
+          <!-- 提示文字 -->
+          <div class="form-text form-text-muted">Your email will be used for notifications and account recovery.</div>
+        </div>
+
+        <!-- 密码输入 -->
+        <div class="mb-3">
+          <label for="password" class="form-label">
+            <i class="bi bi-lock"></i> <span th:text="#{userSettings.newPassword}">New Password</span>
+          </label>
+          <!-- autocomplete="new-password"：浏览器识别为新密码 -->
+          <input type="password" class="form-control" id="password" name="password"
+                 placeholder="Leave blank to keep current password" autocomplete="new-password">
+          <!-- 提示文字 -->
+          <div class="form-text form-text-muted">Only fill this in if you want to change your password.</div>
+        </div>
+
+        <!-- 底部操作按钮 -->
+        <div class="d-flex justify-content-between align-items-center">
+          <!-- 返回个人主页链接 -->
+          <a th:href="@{/user/} + ${user.id}" class="text-decoration-none">
+            <i class="bi bi-arrow-left"></i> Back to Profile
+          </a>
+          <!-- 保存更改按钮 -->
+          <button type="submit" class="btn btn-primary-custom">
+            <i class="bi bi-check-lg"></i> <span th:text="#{userSettings.submit}">Save Changes</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 引入页脚片段 ==================== -->
+<!-- th:replace：替换为layout模板中的footer片段 -->
+<th:block th:replace="~{layout :: footer}"></th:block>
+
+<!-- 引入Bootstrap 5 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

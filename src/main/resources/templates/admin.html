@@ -1,0 +1,527 @@
+<!--
+  ============================================================
+  页面名称：管理员面板页面 (admin.html)
+  页面功能：管理员后台管理界面，处理举报和管理帖子
+  主要内容：
+    - 待处理举报列表：展示未处理的用户举报，支持删除文章或忽略举报
+    - 所有帖子管理：展示所有帖子，支持审批通过、隐藏等操作
+    - 举报历史列表：展示所有已处理的举报记录
+  使用技术：Thymeleaf模板引擎 + Bootstrap 5框架
+  ============================================================
+-->
+<!DOCTYPE html>
+<!-- HTML文档声明，设置语言为中文，引入Thymeleaf命名空间 -->
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <!-- 字符编码设置 -->
+  <meta charset="UTF-8">
+  <!-- 视口设置，确保移动端响应式布局 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 页面标题 -->
+  <title>管理员面板 - InsightForge</title>
+  <!-- 引入Bootstrap 5 CSS框架 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- 引入Bootstrap Icons图标库 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <!-- ==================== CSS样式定义 ==================== -->
+  <style>
+    /* ---------- CSS变量定义：全局颜色主题 ---------- */
+    :root {
+      --primary-dark: #1a2a4a;    /* 主色调深色 */
+      --primary: #1e3a6e;         /* 主色调 */
+      --primary-light: #2c5aa0;   /* 主色调浅色 */
+      --accent: #4a8fe7;          /* 强调色 */
+      --bg-light: #f5f7fa;        /* 浅色背景 */
+      --white: #ffffff;           /* 白色 */
+      --text-dark: #1a1a2e;       /* 深色文字 */
+      --text-muted: #6c757d;      /* 灰色文字 */
+      --border: #dee2e6;          /* 边框颜色 */
+      --danger: #dc3545;          /* 危险色（红色） */
+      --warning: #ffc107;         /* 警告色（黄色） */
+      --success: #198754;         /* 成功色（绿色） */
+    }
+
+    /* ---------- 页面主体样式 ---------- */
+    body {
+      background-color: var(--bg-light);  /* 浅色背景 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-dark);            /* 深色文字 */
+      min-height: 100vh;                  /* 最小高度为视口高度 */
+      display: flex;                      /* 弹性布局 */
+      flex-direction: column;             /* 垂直方向排列 */
+    }
+
+    /* ---------- 导航栏样式 ---------- */
+    .navbar-custom {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));  /* 渐变背景 */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);                                 /* 阴影效果 */
+    }
+
+    /* 导航栏品牌标识样式 */
+    .navbar-custom .navbar-brand {
+      font-weight: 700;          /* 加粗字体 */
+      font-size: 1.5rem;         /* 字体大小 */
+      color: var(--white) !important;  /* 白色文字 */
+      letter-spacing: 0.5px;     /* 字间距 */
+    }
+
+    /* 导航栏品牌图标样式 */
+    .navbar-custom .navbar-brand i {
+      color: var(--accent);      /* 强调色 */
+      margin-right: 6px;         /* 右侧间距 */
+    }
+
+    /* 导航栏链接样式 */
+    .navbar-custom .nav-link {
+      color: rgba(255, 255, 255, 0.85) !important;  /* 半透明白色 */
+      font-weight: 500;                             /* 中等字重 */
+      transition: color 0.2s;                       /* 颜色过渡动画 */
+      padding: 0.5rem 1rem;                         /* 内边距 */
+    }
+
+    /* 导航栏链接悬停样式 */
+    .navbar-custom .nav-link:hover {
+      color: var(--white) !important;  /* 悬停时变为纯白色 */
+    }
+
+    /* 导航栏链接图标样式 */
+    .navbar-custom .nav-link i {
+      margin-right: 4px;  /* 图标右侧间距 */
+    }
+
+    /* 导航栏折叠按钮样式 */
+    .navbar-custom .navbar-toggler {
+      border-color: rgba(255, 255, 255, 0.5);  /* 半透明白色边框 */
+    }
+
+    /* 导航栏折叠按钮图标样式 */
+    .navbar-custom .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* ---------- 主内容区域样式 ---------- */
+    .main-content {
+      flex: 1;                    /* 占据剩余空间 */
+      padding-top: 1.5rem;        /* 顶部内边距 */
+      padding-bottom: 3rem;       /* 底部内边距 */
+    }
+
+    /* ---------- 页脚样式 ---------- */
+    .footer-custom {
+      background: var(--primary-dark);           /* 深色背景 */
+      color: rgba(255, 255, 255, 0.7);           /* 半透明白色文字 */
+      padding: 1rem 0;                           /* 内边距 */
+      text-align: center;                        /* 居中对齐 */
+      font-size: 0.875rem;                       /* 字体大小 */
+      margin-top: auto;                          /* 自动顶部外边距 */
+    }
+
+    /* ---------- 管理员头部样式 ---------- */
+    .admin-header {
+      display: flex;              /* 弹性布局 */
+      align-items: center;        /* 垂直居中 */
+      gap: 0.75rem;               /* 间距 */
+      margin-bottom: 1.5rem;      /* 底部外边距 */
+    }
+
+    /* 管理员头部图标样式 */
+    .admin-header i {
+      font-size: 1.8rem;          /* 大图标 */
+      color: var(--danger);       /* 红色 */
+    }
+
+    /* 管理员头部标题样式 */
+    .admin-header h4 {
+      font-weight: 700;           /* 加粗 */
+      color: var(--primary-dark); /* 深主色调 */
+      margin: 0;                  /* 无外边距 */
+    }
+
+    /* ---------- 区块标题样式 ---------- */
+    .section-header {
+      font-weight: 700;           /* 加粗 */
+      color: var(--primary-dark); /* 深主色调 */
+      margin-bottom: 1rem;        /* 底部外边距 */
+      padding-bottom: 0.5rem;     /* 底部内边距 */
+      border-bottom: 2px solid var(--accent);  /* 底部边框 */
+    }
+
+    /* ---------- 自定义表格样式 ---------- */
+    .table-custom th {
+      background: var(--primary-dark);  /* 表头深色背景 */
+      color: var(--white);              /* 白色文字 */
+      font-weight: 600;                 /* 半粗体 */
+      font-size: 0.85rem;               /* 字体大小 */
+    }
+
+    .table-custom td {
+      vertical-align: middle;           /* 垂直居中 */
+      font-size: 0.9rem;                /* 字体大小 */
+    }
+
+    /* ---------- 严重度徽章样式 ---------- */
+    .severity-badge {
+      font-size: 0.75rem;         /* 字体大小 */
+      padding: 2px 8px;           /* 内边距 */
+      border-radius: 10px;        /* 圆角 */
+      font-weight: 600;           /* 半粗体 */
+    }
+
+    /* 高严重度：红色 */
+    .severity-high {
+      background: #f8d7da;
+      color: #842029;
+    }
+
+    /* 中严重度：黄色 */
+    .severity-medium {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    /* 低严重度：绿色 */
+    .severity-low {
+      background: #d1e7dd;
+      color: #0f5132;
+    }
+
+    /* ---------- 状态徽章样式 ---------- */
+    /* 已解决状态 */
+    .status-badge-resolved {
+      background: #d1e7dd;
+      color: #0f5132;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* 待处理状态 */
+    .status-badge-pending {
+      background: #fff3cd;
+      color: #856404;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* 已忽略状态 */
+    .status-badge-dismissed {
+      background: #e2e3e5;
+      color: #41464b;
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    /* ---------- 自定义按钮样式 ---------- */
+    .btn-danger-custom {
+      font-size: 0.8rem;          /* 字体大小 */
+      padding: 0.25rem 0.75rem;   /* 内边距 */
+    }
+
+    .btn-secondary-custom {
+      font-size: 0.8rem;          /* 字体大小 */
+      padding: 0.25rem 0.75rem;   /* 内边距 */
+    }
+
+    /* ---------- 空状态提示样式 ---------- */
+    .empty-state {
+      text-align: center;         /* 居中对齐 */
+      padding: 2rem 0;            /* 内边距 */
+      color: var(--text-muted);   /* 灰色文字 */
+    }
+
+    .empty-state i {
+      font-size: 2.5rem;          /* 大图标 */
+      margin-bottom: 0.75rem;     /* 底部外边距 */
+    }
+
+    /* ---------- 举报描述样式 ---------- */
+    .report-description {
+      max-width: 200px;           /* 最大宽度 */
+      overflow: hidden;           /* 隐藏溢出 */
+      text-overflow: ellipsis;    /* 文本溢出显示省略号 */
+      white-space: nowrap;        /* 不换行 */
+    }
+
+    /* ---------- 全局链接样式 ---------- */
+    a {
+      color: var(--primary);
+    }
+
+    a:hover {
+      color: var(--primary-light);
+    }
+
+    /* ---------- 自定义卡片样式 ---------- */
+    .card-custom {
+      background: var(--white);           /* 白色背景 */
+      border: 1px solid var(--border);    /* 边框 */
+      border-radius: 8px;                 /* 圆角 */
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== 引入导航栏片段 ==================== -->
+<!-- th:replace：替换为layout模板中的navbar片段 -->
+<th:block th:replace="~{layout :: navbar}"></th:block>
+
+<!-- ==================== 主内容区域 ==================== -->
+<div class="main-content">
+  <div class="container">
+    <!-- ---------- 管理员面板头部 ---------- -->
+    <div class="admin-header">
+      <i class="bi bi-shield-shaded"></i>
+      <h4>管理员面板</h4>
+    </div>
+
+    <!-- ---------- 待处理举报区域 ---------- -->
+    <div class="card-custom p-3 mb-4">
+      <h5 class="section-header"><i class="bi bi-flag-fill text-danger"></i> 待处理举报</h5>
+
+      <!-- th:if：当待处理举报不为空时显示表格 -->
+      <th:block th:if="${pendingReports != null and !pendingReports.isEmpty()}">
+        <div class="table-responsive">
+          <table class="table table-custom table-bordered align-middle">
+            <thead>
+              <tr>
+                <th>举报ID</th>
+                <th>文章标题</th>
+                <th>举报人</th>
+                <th>原因</th>
+                <th>严重度</th>
+                <th>描述</th>
+                <th>时间</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- th:each：遍历待处理举报列表 -->
+              <tr th:each="report : ${pendingReports}">
+                <!-- 举报ID -->
+                <td><span class="fw-bold">#<span th:text="${report.id}">ID</span></span></td>
+                <!-- 文章标题链接 -->
+                <td>
+                  <a th:href="@{/post/{id}(id=${report.postId})}" class="fw-medium" th:text="${report.postTitle} ?: '未知文章'">文章标题</a>
+                </td>
+                <!-- 举报人 -->
+                <td>
+                  <span th:text="${report.username} ?: 'Anonymous'">举报人</span>
+                </td>
+                <!-- 举报原因 -->
+                <td>
+                  <span class="badge bg-secondary" th:text="${report.reason}">原因</span>
+                </td>
+                <!-- 严重度徽章 -->
+                <!-- th:classappend：根据严重度动态添加样式类 -->
+                <td>
+                  <span class="severity-badge"
+                        th:classappend="${report.severity >= 7} ? 'severity-high' : (${report.severity >= 4} ? 'severity-medium' : 'severity-low')">
+                    <span th:text="${report.severity}">0</span>
+                  </span>
+                </td>
+                <!-- 举报描述 -->
+                <td>
+                  <span class="report-description d-inline-block" th:text="${report.description}">描述</span>
+                </td>
+                <!-- 举报时间 -->
+                <td class="text-nowrap small">
+                  <span th:text="${report.createdAt != null ? #temporals.format(report.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}">时间</span>
+                </td>
+                <!-- 操作按钮 -->
+                <td>
+                  <div class="d-flex gap-1">
+                    <!-- 删除文章表单 -->
+                    <!-- onsubmit：提交前确认 -->
+                    <form th:action="@{/admin/report/{id}/resolve(id=${report.id})}" method="post" class="d-inline" onsubmit="return confirm('确认删除该文章？')">
+                      <input type="hidden" name="action" value="remove">
+                      <button type="submit" class="btn btn-danger btn-sm btn-danger-custom">
+                        <i class="bi bi-trash"></i> Remove Post
+                      </button>
+                    </form>
+                    <!-- 忽略举报表单 -->
+                    <form th:action="@{/admin/report/{id}/resolve(id=${report.id})}" method="post" class="d-inline">
+                      <input type="hidden" name="action" value="dismiss">
+                      <button type="submit" class="btn btn-outline-secondary btn-sm btn-secondary-custom">
+                        <i class="bi bi-x-circle"></i> Dismiss
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </th:block>
+
+      <!-- th:if：当待处理举报为空时显示空状态提示 -->
+      <th:block th:if="${pendingReports == null or pendingReports.isEmpty()}">
+        <div class="empty-state">
+          <i class="bi bi-check-circle text-success d-block"></i>
+          <p class="mb-0" th:text="#{admin.noPendingReports}">所有举报已处理完毕</p>
+        </div>
+      </th:block>
+    </div>
+
+    <!-- ---------- 所有帖子管理区域 ---------- -->
+    <div class="card-custom p-3 mb-4">
+      <h5 class="section-header"><i class="bi bi-file-earmark-text"></i> <span th:text="#{admin.postsManagement}">所有帖子管理</span></h5>
+
+      <!-- th:if：当帖子列表不为空时显示表格 -->
+      <th:block th:if="${allPosts != null and !allPosts.isEmpty()}">
+        <div class="table-responsive">
+          <table class="table table-custom table-bordered align-middle">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>标题</th>
+                <th>作者</th>
+                <th>分类</th>
+                <th>状态</th>
+                <th>点赞</th>
+                <th>评论</th>
+                <th>举报</th>
+                <th>操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- th:each：遍历所有帖子列表 -->
+              <tr th:each="post : ${allPosts}">
+                <!-- 帖子ID -->
+                <td><span class="fw-bold">#<span th:text="${post.id}">ID</span></span></td>
+                <!-- 帖子标题链接 -->
+                <td>
+                  <a th:href="@{/post/{id}(id=${post.id})}" class="fw-medium" th:text="${post.title}">标题</a>
+                </td>
+                <!-- 作者 -->
+                <td><span th:text="${post.authorName}">作者</span></td>
+                <!-- 分类 -->
+                <td><span class="badge bg-info" th:text="${post.category}">分类</span></td>
+                <!-- 帖子状态徽章 -->
+                <td>
+                  <!-- th:if：根据状态显示不同颜色的徽章 -->
+                  <span class="badge bg-info" th:if="${post.status == 'PENDING'}" th:text="#{admin.status.pending}">待审核</span>
+                  <span class="badge bg-success" th:if="${post.status == 'PUBLISHED'}" th:text="#{admin.status.published}">已发布</span>
+                  <span class="badge bg-warning text-dark" th:if="${post.status == 'FLAGGED'}" th:text="#{admin.status.flagged}">已标记</span>
+                  <span class="badge bg-secondary" th:if="${post.status == 'HIDDEN'}" th:text="#{admin.status.hidden}">已隐藏</span>
+                  <span class="badge bg-danger" th:if="${post.status == 'DELETED'}" th:text="#{admin.status.deleted}">已删除</span>
+                </td>
+                <!-- 点赞数 -->
+                <td><i class="bi bi-hand-thumbs-up"></i> <span th:text="${post.likeCount}">0</span></td>
+                <!-- 评论数 -->
+                <td><i class="bi bi-chat"></i> <span th:text="${post.commentCount}">0</span></td>
+                <!-- 举报数 -->
+                <td><i class="bi bi-flag"></i> <span th:text="${post.reportCount}">0</span></td>
+                <!-- 操作按钮 -->
+                <td>
+                  <div class="d-flex gap-1">
+                    <!-- 审批通过表单：仅对未发布帖子显示 -->
+                    <form th:action="@{/admin/post/{id}/approve(id=${post.id})}" method="post" class="d-inline" th:if="${post.status != 'PUBLISHED'}">
+                      <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-check-circle"></i> <span th:text="#{admin.approve}">审批通过</span>
+                      </button>
+                    </form>
+                    <!-- 隐藏帖子表单：仅对未隐藏和未删除帖子显示 -->
+                    <!-- onsubmit：提交前确认 -->
+                    <form th:action="@{/admin/post/{id}/hide(id=${post.id})}" method="post" class="d-inline" th:if="${post.status != 'HIDDEN' and post.status != 'DELETED'}">
+                      <button type="submit" class="btn btn-outline-secondary btn-sm" onclick="return confirm('确认隐藏该帖子？')">
+                        <i class="bi bi-eye-slash"></i> <span th:text="#{admin.hide}">隐藏</span>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </th:block>
+
+      <!-- th:if：当帖子列表为空时显示空状态提示 -->
+      <th:block th:if="${allPosts == null or allPosts.isEmpty()}">
+        <div class="empty-state">
+          <i class="bi bi-inbox d-block"></i>
+          <p class="mb-0" th:text="#{admin.noPosts}">暂无帖子</p>
+        </div>
+      </th:block>
+    </div>
+
+    <!-- ---------- 举报历史区域 ---------- -->
+    <div class="card-custom p-3">
+      <h5 class="section-header"><i class="bi bi-list-ul"></i> <span th:text="#{admin.reportsHistory}">所有举报历史</span></h5>
+
+      <!-- th:if：当举报历史不为空时显示表格 -->
+      <th:block th:if="${reports != null and !reports.isEmpty()}">
+        <div class="table-responsive">
+          <table class="table table-custom table-bordered align-middle">
+            <thead>
+              <tr>
+                <th>举报ID</th>
+                <th>文章标题</th>
+                <th>举报人</th>
+                <th>原因</th>
+                <th>描述</th>
+                <th>状态</th>
+                <th>时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- th:each：遍历举报历史列表 -->
+              <tr th:each="report : ${reports}">
+                <!-- 举报ID -->
+                <td><span class="fw-bold">#<span th:text="${report.id}">ID</span></span></td>
+                <!-- 文章标题链接 -->
+                <td>
+                  <a th:href="@{/post/{id}(id=${report.postId})}" class="fw-medium" th:text="${report.postTitle} ?: '未知文章'">文章标题</a>
+                </td>
+                <!-- 举报人 -->
+                <td>
+                  <span th:text="${report.username} ?: 'Anonymous'">举报人</span>
+                </td>
+                <!-- 举报原因 -->
+                <td>
+                  <span class="badge bg-secondary" th:text="${report.reason}">原因</span>
+                </td>
+                <!-- 举报描述 -->
+                <td>
+                  <span class="report-description d-inline-block" th:text="${report.description}">描述</span>
+                </td>
+                <!-- 处理状态徽章 -->
+                <td>
+                  <!-- th:if：根据状态显示不同样式的徽章 -->
+                  <span class="status-badge-pending" th:if="${report.status == 'PENDING'}" th:text="#{admin.reportStatus.pending}">待处理</span>
+                  <span class="status-badge-resolved" th:if="${report.status == 'RESOLVED'}" th:text="#{admin.reportStatus.resolved}">已移除</span>
+                  <span class="status-badge-dismissed" th:if="${report.status == 'DISMISSED'}" th:text="#{admin.reportStatus.dismissed}">已忽略</span>
+                  <!-- 其他状态 -->
+                  <span class="badge bg-secondary" th:if="${report.status != 'PENDING' and report.status != 'RESOLVED' and report.status != 'DISMISSED'}" th:text="${report.status}">状态</span>
+                </td>
+                <!-- 举报时间 -->
+                <td class="text-nowrap small">
+                  <span th:text="${report.createdAt != null ? #temporals.format(report.createdAt, 'yyyy-MM-dd HH:mm') : 'N/A'}">时间</span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </th:block>
+
+      <!-- th:if：当举报历史为空时显示空状态提示 -->
+      <th:block th:if="${reports == null or reports.isEmpty()}">
+        <div class="empty-state">
+          <i class="bi bi-inbox d-block"></i>
+          <p class="mb-0">暂无举报记录</p>
+        </div>
+      </th:block>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== 引入页脚片段 ==================== -->
+<!-- th:replace：替换为layout模板中的footer片段 -->
+<th:block th:replace="~{layout :: footer}"></th:block>
+
+<!-- 引入Bootstrap 5 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

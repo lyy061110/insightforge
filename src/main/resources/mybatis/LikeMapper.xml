@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    LikeMapper.xml - 点赞数据访问映射器
+    
+    功能说明：
+    - 管理帖子点赞记录的增删改查操作
+    - 支持检查用户是否已点赞某帖子
+    - 支持统计帖子的点赞数量
+-->
+<mapper namespace="com.insightforge.mapper.LikeMapper">
+
+    <!-- 点赞结果映射：将数据库字段映射到Like实体类属性 -->
+    <resultMap id="likeResultMap" type="com.insightforge.entity.Like">
+        <id property="id" column="id"/>                      <!-- 点赞记录ID，主键 -->
+        <result property="postId" column="post_id"/>        <!-- 被点赞的帖子ID -->
+        <result property="userId" column="user_id"/>        <!-- 点赞用户ID -->
+        <result property="createdAt" column="created_at"/>  <!-- 点赞时间 -->
+    </resultMap>
+
+    <!-- 根据帖子ID和用户ID查询点赞记录（用于判断用户是否已点赞） -->
+    <select id="findByPostAndUser" resultMap="likeResultMap">
+        SELECT id, post_id, user_id, created_at
+        FROM likes
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </select>
+
+    <!-- 新增点赞记录，useGeneratedKeys返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO likes (post_id, user_id)
+        VALUES (#{postId}, #{userId})
+    </insert>
+
+    <!-- 删除点赞记录（取消点赞） -->
+    <delete id="delete">
+        DELETE FROM likes
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+
+    <!-- 统计帖子的点赞数量 -->
+    <select id="countByPostId" resultType="int">
+        SELECT COUNT(*)
+        FROM likes
+        WHERE post_id = #{postId}
+    </select>
+
+</mapper>

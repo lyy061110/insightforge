@@ -1,0 +1,246 @@
+<!--
+  ============================================================
+  页面名称：用户注册页面 (register.html)
+  页面功能：新用户注册入口，创建用户账号
+  主要内容：
+    - 品牌标识：显示系统Logo和名称
+    - 注册表单：用户名、邮箱和密码输入框
+    - 登录链接：引导已注册用户前往登录页面
+  使用技术：Thymeleaf模板引擎 + Bootstrap 5框架
+  ============================================================
+-->
+<!DOCTYPE html>
+<!-- HTML文档声明，引入Thymeleaf命名空间 -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <!-- 字符编码设置 -->
+  <meta charset="UTF-8">
+  <!-- 视口设置，确保移动端响应式布局 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 页面标题 -->
+  <title th:text="#{register.title}">注册 - InsightForge</title>
+  <!-- 引入Bootstrap 5 CSS框架 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- 引入Bootstrap Icons图标库 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <!-- ==================== CSS样式定义 ==================== -->
+  <style>
+    /* ---------- CSS变量定义：全局颜色主题 ---------- */
+    :root {
+      --primary-dark: #1a2a4a;    /* 主色调深色 */
+      --primary: #1e3a6e;         /* 主色调 */
+      --primary-light: #2c5aa0;   /* 主色调浅色 */
+      --accent: #4a8fe7;          /* 强调色 */
+      --bg-light: #f5f7fa;        /* 浅色背景 */
+      --white: #ffffff;           /* 白色 */
+      --text-dark: #1a1a2e;       /* 深色文字 */
+      --text-muted: #6c757d;      /* 灰色文字 */
+    }
+
+    /* ---------- 页面主体样式 ---------- */
+    body {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));  /* 渐变背景 */
+      min-height: 100vh;                  /* 最小高度为视口高度 */
+      display: flex;                      /* 弹性布局 */
+      align-items: center;                /* 垂直居中 */
+      justify-content: center;            /* 水平居中 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    /* ---------- 认证包装器样式 ---------- */
+    .auth-wrapper {
+      width: 100%;            /* 宽度100% */
+      max-width: 420px;       /* 最大宽度420px */
+      padding: 1rem;          /* 内边距 */
+    }
+
+    /* ---------- 认证卡片样式 ---------- */
+    .auth-card {
+      background: var(--white);               /* 白色背景 */
+      border-radius: 12px;                    /* 圆角 */
+      padding: 2.5rem;                        /* 内边距 */
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);  /* 阴影效果 */
+    }
+
+    /* ---------- 品牌标识区域样式 ---------- */
+    .auth-brand {
+      text-align: center;         /* 居中对齐 */
+      margin-bottom: 1.5rem;      /* 底部外边距 */
+    }
+
+    /* 品牌图标样式 */
+    .auth-brand .brand-icon {
+      font-size: 2.5rem;          /* 大图标 */
+      color: var(--accent);       /* 强调色 */
+    }
+
+    /* 品牌标题样式 */
+    .auth-brand h4 {
+      font-weight: 700;           /* 加粗 */
+      color: var(--primary-dark); /* 深主色调 */
+      margin-top: 0.5rem;         /* 顶部外边距 */
+    }
+
+    /* ---------- 认证标题样式 ---------- */
+    .auth-title {
+      font-weight: 700;           /* 加粗 */
+      color: var(--primary-dark); /* 深主色调 */
+      text-align: center;         /* 居中对齐 */
+      margin-bottom: 1.5rem;      /* 底部外边距 */
+      font-size: 1.25rem;         /* 字体大小 */
+    }
+
+    /* ---------- 表单控件聚焦样式 ---------- */
+    .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.2rem rgba(74, 143, 231, 0.25);
+    }
+
+    /* ---------- 输入组样式 ---------- */
+    /* 输入组附加文本样式 */
+    .input-group-text {
+      background: transparent;    /* 透明背景 */
+      border-right: none;         /* 无右边框 */
+    }
+
+    /* 输入组内表单控件样式 */
+    .input-group .form-control {
+      border-left: none;          /* 无左边框 */
+    }
+
+    /* 输入组内表单控件聚焦样式 */
+    .input-group .form-control:focus {
+      border-color: #ced4da;
+    }
+
+    /* 输入组整体聚焦样式 */
+    .input-group:focus-within .input-group-text,
+    .input-group:focus-within .form-control {
+      border-color: var(--accent);
+    }
+
+    .input-group:focus-within {
+      box-shadow: 0 0 0 0.2rem rgba(74, 143, 231, 0.25);
+      border-radius: 0.375rem;
+    }
+
+    /* ---------- 自定义主色调按钮样式 ---------- */
+    .btn-primary-custom {
+      background: var(--primary);     /* 主色调背景 */
+      border-color: var(--primary);   /* 主色调边框 */
+      color: var(--white);            /* 白色文字 */
+      font-weight: 600;               /* 半粗体 */
+      padding: 0.6rem 0;              /* 内边距 */
+      width: 100%;                    /* 宽度100% */
+    }
+
+    .btn-primary-custom:hover {
+      background: var(--primary-light);   /* 悬停时浅主色调 */
+      border-color: var(--primary-light); /* 悬停时浅主色调边框 */
+      color: var(--white);                /* 白色文字 */
+    }
+
+    /* ---------- 认证页脚样式 ---------- */
+    .auth-footer {
+      text-align: center;         /* 居中对齐 */
+      margin-top: 1rem;           /* 顶部外边距 */
+      font-size: 0.9rem;          /* 字体大小 */
+      color: var(--text-muted);   /* 灰色文字 */
+    }
+
+    /* 认证页脚链接样式 */
+    .auth-footer a {
+      color: var(--primary);      /* 主色调 */
+      font-weight: 600;           /* 半粗体 */
+      text-decoration: none;      /* 无下划线 */
+    }
+
+    .auth-footer a:hover {
+      color: var(--primary-light); /* 悬停时浅主色调 */
+    }
+
+    /* ---------- 全局链接样式 ---------- */
+    a {
+      color: var(--primary);
+    }
+
+    a:hover {
+      color: var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== 注册卡片区域 ==================== -->
+<div class="auth-wrapper">
+  <div class="auth-card">
+    <!-- ---------- 品牌标识 ---------- -->
+    <div class="auth-brand">
+      <div class="brand-icon">
+        <i class="bi bi-lightbulb-fill"></i>
+      </div>
+      <h4>InsightForge</h4>
+    </div>
+
+    <!-- ---------- 注册标题 ---------- -->
+    <h5 class="auth-title"><i class="bi bi-person-plus"></i> <span th:text="#{register.header}">注册</span></h5>
+
+    <!-- ---------- 注册表单 ---------- -->
+    <!-- th:action：表单提交地址，@{/register}生成注册处理URL -->
+    <form th:action="@{/register}" method="post">
+      <!-- 用户名输入框 -->
+      <div class="mb-3">
+        <label for="username" class="form-label fw-semibold small" th:text="#{register.username}">用户名</label>
+        <div class="input-group">
+          <!-- 用户图标 -->
+          <span class="input-group-text text-muted"><i class="bi bi-person"></i></span>
+          <!-- 用户名输入字段，autocomplete="username"用于浏览器自动填充 -->
+          <input type="text" class="form-control" id="username" name="username"
+                 th:placeholder="#{register.usernamePlaceholder}" required autocomplete="username">
+        </div>
+      </div>
+
+      <!-- 邮箱输入框 -->
+      <div class="mb-3">
+        <label for="email" class="form-label fw-semibold small" th:text="#{register.email}">邮箱</label>
+        <div class="input-group">
+          <!-- 邮件图标 -->
+          <span class="input-group-text text-muted"><i class="bi bi-envelope"></i></span>
+          <!-- 邮箱输入字段，type="email"确保邮箱格式验证，autocomplete="email"用于浏览器自动填充 -->
+          <input type="email" class="form-control" id="email" name="email"
+                 th:placeholder="#{register.emailPlaceholder}" required autocomplete="email">
+        </div>
+      </div>
+
+      <!-- 密码输入框 -->
+      <div class="mb-3">
+        <label for="password" class="form-label fw-semibold small" th:text="#{register.password}">密码</label>
+        <div class="input-group">
+          <!-- 锁图标 -->
+          <span class="input-group-text text-muted"><i class="bi bi-lock"></i></span>
+          <!-- 密码输入字段，autocomplete="new-password"用于浏览器识别为新密码 -->
+          <input type="password" class="form-control" id="password" name="password"
+                 th:placeholder="#{register.passwordPlaceholder}" required autocomplete="new-password">
+        </div>
+      </div>
+
+      <!-- 注册提交按钮 -->
+      <button type="submit" class="btn btn-primary-custom mt-2">
+        <i class="bi bi-person-check"></i> <span th:text="#{register.submit}">注册</span>
+      </button>
+    </form>
+
+    <!-- ---------- 登录引导链接 ---------- -->
+    <div class="auth-footer">
+      <span th:text="#{register.hasAccount}">已有账号？登录</span>
+      <!-- th:href：生成登录页面链接 -->
+      <a th:href="@{/login}"><i class="bi bi-arrow-right"></i></a>
+    </div>
+  </div>
+</div>
+
+<!-- 引入Bootstrap 5 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

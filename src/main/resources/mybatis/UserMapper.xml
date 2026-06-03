@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    UserMapper.xml - 用户数据访问映射器
+    
+    功能说明：
+    - 管理用户账户的增删改查操作
+    - 支持用户声誉积分更新
+    - 支持用户关注话题的管理
+-->
+<mapper namespace="com.insightforge.mapper.UserMapper">
+
+    <!-- 用户结果映射：将数据库字段映射到User实体类属性 -->
+    <resultMap id="userResultMap" type="com.insightforge.entity.User">
+        <id property="id" column="id"/>                          <!-- 用户ID，主键 -->
+        <result property="username" column="username"/>         <!-- 用户名 -->
+        <result property="password" column="password"/>         <!-- 密码（加密存储） -->
+        <result property="email" column="email"/>               <!-- 邮箱地址 -->
+        <result property="reputation" column="reputation"/>     <!-- 声誉积分 -->
+        <result property="followedTopics" column="followed_topics"/>  <!-- 关注的话题列表 -->
+        <result property="createdAt" column="created_at"/>      <!-- 创建时间 -->
+    </resultMap>
+
+    <!-- 根据ID查询用户 -->
+    <select id="findById" resultMap="userResultMap">
+        SELECT id, username, password, email, reputation, followed_topics, created_at
+        FROM users
+        WHERE id = #{id}
+    </select>
+
+    <!-- 根据用户名查询用户（用于登录验证） -->
+    <select id="findByUsername" resultMap="userResultMap">
+        SELECT id, username, password, email, reputation, followed_topics, created_at
+        FROM users
+        WHERE username = #{username}
+    </select>
+
+    <!-- 查询所有用户 -->
+    <select id="findAll" resultMap="userResultMap">
+        SELECT id, username, password, email, reputation, followed_topics, created_at
+        FROM users
+    </select>
+
+    <!-- 新增用户，useGeneratedKeys返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO users (username, password, email, reputation, followed_topics)
+        VALUES (#{username}, #{password}, #{email}, #{reputation}, #{followedTopics})
+    </insert>
+
+    <!-- 更新用户声誉积分，delta为增量（可为正负） -->
+    <update id="updateReputation">
+        UPDATE users
+        SET reputation = reputation + #{delta}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 动态更新用户信息，仅更新非空字段 -->
+    <update id="update">
+        UPDATE users
+        <set>
+            <if test="email != null">email = #{email},</if>
+            <if test="password != null and password != ''">password = #{password},</if>
+            <if test="followedTopics != null">followed_topics = #{followedTopics},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
+
+</mapper>

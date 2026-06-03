@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    CommentMapper.xml - 评论数据访问映射器
+    
+    功能说明：
+    - 管理帖子评论的增删改查操作
+    - 支持按帖子ID查询评论列表
+    - 关联查询用户信息获取评论者用户名
+-->
+<mapper namespace="com.insightforge.mapper.CommentMapper">
+
+    <!-- 评论结果映射：将数据库字段映射到Comment实体类属性 -->
+    <resultMap id="commentResultMap" type="com.insightforge.entity.Comment">
+        <id property="id" column="id"/>                      <!-- 评论ID，主键 -->
+        <result property="postId" column="post_id"/>         <!-- 所属帖子ID -->
+        <result property="userId" column="user_id"/>         <!-- 评论者用户ID -->
+        <result property="content" column="content"/>        <!-- 评论内容 -->
+        <result property="createdAt" column="created_at"/>  <!-- 创建时间 -->
+        <result property="username" column="username"/>     <!-- 评论者用户名（关联查询） -->
+    </resultMap>
+
+    <!-- 根据帖子ID查询评论列表，按创建时间升序排列（先发表的在前） -->
+    <select id="findByPostId" resultMap="commentResultMap">
+        SELECT c.id, c.post_id, c.user_id, c.content, c.created_at,
+               u.username
+        FROM comments c
+        JOIN users u ON c.user_id = u.id
+        WHERE c.post_id = #{postId}
+        ORDER BY c.created_at ASC
+    </select>
+
+    <!-- 新增评论，useGeneratedKeys返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO comments (post_id, user_id, content)
+        VALUES (#{postId}, #{userId}, #{content})
+    </insert>
+
+    <!-- 根据ID删除评论 -->
+    <delete id="deleteById">
+        DELETE FROM comments
+        WHERE id = #{id}
+    </delete>
+
+</mapper>

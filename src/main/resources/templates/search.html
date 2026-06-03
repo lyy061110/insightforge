@@ -1,0 +1,348 @@
+<!--
+  ============================================================
+  页面名称：搜索结果页面 (search.html)
+  页面功能：展示文章搜索结果，支持关键词搜索
+  主要内容：
+    - 搜索框：支持关键词搜索
+    - 搜索结果列表：展示匹配关键词的文章
+    - 搜索关键词显示：显示当前搜索的关键词
+    - 文章信息卡片：显示文章标题、作者、点赞数、评论数、发布时间
+    - 分类徽章：显示文章所属分类
+  使用技术：Thymeleaf模板引擎 + Bootstrap 5框架
+  ============================================================
+-->
+<!DOCTYPE html>
+<!-- HTML文档声明，引入Thymeleaf命名空间 -->
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <!-- 字符编码设置 -->
+  <meta charset="UTF-8">
+  <!-- 视口设置，确保移动端响应式布局 -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- th:text：动态设置页面标题，显示搜索关键词 -->
+  <title th:text="#{search.pageTitle(${query})} + ' - InsightForge'">搜索 - InsightForge</title>
+  <!-- 引入Bootstrap 5 CSS框架 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- 引入Bootstrap Icons图标库 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <!-- ==================== CSS样式定义 ==================== -->
+  <style>
+    /* ---------- CSS变量定义：全局颜色主题 ---------- */
+    :root {
+      --primary-dark: #1a2a4a;    /* 主色调深色 */
+      --primary: #1e3a6e;         /* 主色调 */
+      --primary-light: #2c5aa0;   /* 主色调浅色 */
+      --accent: #4a8fe7;          /* 强调色 */
+      --bg-light: #f5f7fa;        /* 浅色背景 */
+      --white: #ffffff;           /* 白色 */
+      --text-dark: #1a1a2e;       /* 深色文字 */
+      --text-muted: #6c757d;      /* 灰色文字 */
+      --border: #dee2e6;          /* 边框颜色 */
+    }
+
+    /* ---------- 页面主体样式 ---------- */
+    body {
+      background-color: var(--bg-light);  /* 浅色背景 */
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-dark);            /* 深色文字 */
+      min-height: 100vh;                  /* 最小高度为视口高度 */
+      display: flex;                      /* 弹性布局 */
+      flex-direction: column;             /* 垂直方向排列 */
+    }
+
+    /* ---------- 导航栏样式 ---------- */
+    .navbar-custom {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));  /* 渐变背景 */
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);                                 /* 阴影效果 */
+    }
+
+    /* 导航栏品牌标识样式 */
+    .navbar-custom .navbar-brand {
+      font-weight: 700;          /* 加粗字体 */
+      font-size: 1.5rem;         /* 字体大小 */
+      color: var(--white) !important;  /* 白色文字 */
+      letter-spacing: 0.5px;     /* 字间距 */
+    }
+
+    /* 导航栏品牌图标样式 */
+    .navbar-custom .navbar-brand i {
+      color: var(--accent);      /* 强调色 */
+      margin-right: 6px;         /* 右侧间距 */
+    }
+
+    /* 导航栏链接样式 */
+    .navbar-custom .nav-link {
+      color: rgba(255, 255, 255, 0.85) !important;  /* 半透明白色 */
+      font-weight: 500;                             /* 中等字重 */
+      transition: color 0.2s;                       /* 颜色过渡动画 */
+      padding: 0.5rem 1rem;                         /* 内边距 */
+    }
+
+    /* 导航栏链接悬停样式 */
+    .navbar-custom .nav-link:hover {
+      color: var(--white) !important;  /* 悬停时变为纯白色 */
+    }
+
+    /* 导航栏链接图标样式 */
+    .navbar-custom .nav-link i {
+      margin-right: 4px;  /* 图标右侧间距 */
+    }
+
+    /* 导航栏折叠按钮样式 */
+    .navbar-custom .navbar-toggler {
+      border-color: rgba(255, 255, 255, 0.5);  /* 半透明白色边框 */
+    }
+
+    /* 导航栏折叠按钮图标样式 */
+    .navbar-custom .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* ---------- 主内容区域样式 ---------- */
+    .main-content {
+      flex: 1;                    /* 占据剩余空间 */
+      padding-top: 1.5rem;        /* 顶部内边距 */
+      padding-bottom: 3rem;       /* 底部内边距 */
+    }
+
+    /* ---------- 页脚样式 ---------- */
+    .footer-custom {
+      background: var(--primary-dark);           /* 深色背景 */
+      color: rgba(255, 255, 255, 0.7);           /* 半透明白色文字 */
+      padding: 1rem 0;                           /* 内边距 */
+      text-align: center;                        /* 居中对齐 */
+      font-size: 0.875rem;                       /* 字体大小 */
+      margin-top: auto;                          /* 自动顶部外边距 */
+    }
+
+    /* ---------- 搜索框样式 ---------- */
+    .search-box {
+      max-width: 500px;           /* 最大宽度 */
+      margin: 0 auto 1.5rem auto; /* 居中并设置底部外边距 */
+    }
+
+    /* 搜索框聚焦样式 */
+    .search-box .form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.2rem rgba(74, 143, 231, 0.25);
+    }
+
+    /* ---------- 搜索结果标题样式 ---------- */
+    .search-header {
+      display: flex;              /* 弹性布局 */
+      align-items: center;        /* 垂直居中 */
+      gap: 0.75rem;               /* 间距 */
+      margin-bottom: 1.5rem;      /* 底部外边距 */
+    }
+
+    /* 搜索结果标题图标样式 */
+    .search-header i {
+      font-size: 1.8rem;          /* 大图标 */
+      color: var(--accent);       /* 强调色 */
+    }
+
+    /* 搜索结果标题文字样式 */
+    .search-header h4 {
+      font-weight: 700;           /* 加粗 */
+      color: var(--primary-dark); /* 深主色调 */
+      margin: 0;                  /* 无外边距 */
+    }
+
+    /* 搜索关键词徽章样式 */
+    .search-keyword {
+      background: var(--accent);  /* 强调色背景 */
+      color: var(--white);        /* 白色文字 */
+      font-size: 1rem;            /* 字体大小 */
+      font-weight: 600;           /* 半粗体 */
+      padding: 4px 16px;          /* 内边距 */
+      border-radius: 20px;        /* 圆角 */
+    }
+
+    /* ---------- 搜索结果数量提示样式 ---------- */
+    .search-result-count {
+      font-size: 0.9rem;          /* 字体大小 */
+      color: var(--text-muted);   /* 灰色文字 */
+      margin-bottom: 1rem;        /* 底部外边距 */
+    }
+
+    /* ---------- 文章卡片样式 ---------- */
+    .post-card {
+      background: var(--white);                   /* 白色背景 */
+      border: 1px solid var(--border);            /* 边框 */
+      border-radius: 8px;                         /* 圆角 */
+      padding: 1.25rem;                           /* 内边距 */
+      margin-bottom: 1rem;                        /* 底部外边距 */
+      transition: box-shadow 0.2s, transform 0.2s; /* 过渡动画 */
+    }
+
+    /* 文章卡片悬停效果 */
+    .post-card:hover {
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);  /* 悬停阴影 */
+      transform: translateY(-2px);                /* 悬停上移 */
+    }
+
+    /* 文章卡片标题样式 */
+    .post-card .post-title {
+      font-size: 1.2rem;          /* 字体大小 */
+      font-weight: 600;           /* 半粗体 */
+      color: var(--primary);      /* 主色调 */
+      text-decoration: none;      /* 无下划线 */
+    }
+
+    /* 文章卡片标题悬停样式 */
+    .post-card .post-title:hover {
+      color: var(--primary-light);  /* 悬停时变为浅主色调 */
+    }
+
+    /* 文章卡片元信息样式 */
+    .post-card .post-meta {
+      font-size: 0.85rem;         /* 字体大小 */
+      color: var(--text-muted);   /* 灰色文字 */
+    }
+
+    /* ---------- 分类徽章样式 ---------- */
+    .category-badge {
+      background: var(--primary-light);  /* 浅主色调背景 */
+      color: var(--white);               /* 白色文字 */
+      font-size: 0.75rem;                /* 字体大小 */
+      font-weight: 500;                  /* 中等字重 */
+      padding: 2px 10px;                 /* 内边距 */
+      border-radius: 12px;               /* 圆角 */
+      text-decoration: none;             /* 无下划线 */
+    }
+
+    /* 分类徽章悬停样式 */
+    .category-badge:hover {
+      background: var(--accent);   /* 悬停时强调色背景 */
+      color: var(--white);         /* 白色文字 */
+    }
+
+    /* ---------- 空状态提示样式 ---------- */
+    .empty-state {
+      text-align: center;         /* 居中对齐 */
+      padding: 3rem 0;            /* 内边距 */
+      color: var(--text-muted);   /* 灰色文字 */
+    }
+
+    .empty-state i {
+      font-size: 3rem;            /* 大图标 */
+      margin-bottom: 1rem;        /* 底部外边距 */
+    }
+
+    /* ---------- 自定义按钮样式 ---------- */
+    .btn-primary-custom {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: var(--white);
+      font-weight: 600;
+    }
+
+    .btn-primary-custom:hover {
+      background: var(--primary-light);
+      border-color: var(--primary-light);
+      color: var(--white);
+    }
+
+    /* ---------- 全局链接样式 ---------- */
+    a {
+      color: var(--primary);
+    }
+
+    a:hover {
+      color: var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==================== 引入导航栏片段 ==================== -->
+<!-- th:replace：替换为layout模板中的navbar片段 -->
+<th:block th:replace="~{layout :: navbar}"></th:block>
+
+<!-- ==================== 主内容区域 ==================== -->
+<div class="main-content">
+  <div class="container">
+    <!-- ---------- 搜索框区域 ---------- -->
+    <div class="search-box">
+      <!-- th:action：表单提交地址，@{/search}生成搜索处理URL -->
+      <form th:action="@{/search}" method="get" class="d-flex">
+        <!-- th:value：预填充当前搜索关键词 -->
+        <input class="form-control me-2" type="search" name="q" placeholder="搜索文章..."
+               aria-label="Search" required th:value="${query}" th:placeholder="#{home.searchPlaceholder}">
+        <button class="btn btn-primary-custom" type="submit">
+          <i class="bi bi-search"></i> <span th:text="#{home.searchBtn}">搜索</span>
+        </button>
+      </form>
+    </div>
+
+    <!-- ---------- 搜索结果标题 ---------- -->
+    <div class="search-header">
+      <i class="bi bi-search"></i>
+      <!-- th:text：显示搜索关键词 -->
+      <h4><span th:text="#{search.header}">搜索结果：</span><span class="search-keyword" th:text="${query}">关键词</span></h4>
+    </div>
+
+    <!-- ---------- 搜索结果列表 ---------- -->
+    <!-- th:if：当搜索结果不为空时显示 -->
+    <th:block th:if="${posts != null and !posts.isEmpty()}">
+      <!-- 搜索结果数量提示 -->
+      <!-- #lists.size：获取列表大小 -->
+      <p class="search-result-count" th:text="#{search.resultsCount(${#lists.size(posts)})}">找到 <strong>0</strong> 篇相关文章</p>
+      
+      <!-- th:each：遍历搜索结果列表 -->
+      <div class="post-card" th:each="post : ${posts}">
+        <div class="d-flex justify-content-between align-items-start mb-2">
+          <!-- 文章标题链接 -->
+          <!-- th:href：生成文章详情页链接 -->
+          <!-- th:text：显示文章标题 -->
+          <a class="post-title" th:href="@{/post/{id}(id=${post.id})}" th:text="${post.title}">文章标题</a>
+          <!-- 分类徽章 -->
+          <!-- th:if：分类不为空时显示 -->
+          <a th:href="@{/category/{name}(name=${post.category})}" class="category-badge" th:text="${post.category}" th:if="${post.category != null}">分类</a>
+        </div>
+        <!-- 文章元信息 -->
+        <div class="post-meta d-flex flex-wrap align-items-center gap-2">
+          <!-- 作者信息 -->
+          <!-- ?: Elvis运算符，提供默认值 -->
+          <span><i class="bi bi-person-circle"></i> <span th:text="${post.authorName} ?: 'Anonymous'">作者</span></span>
+          <span class="text-muted">|</span>
+          <!-- 点赞数 -->
+          <span><i class="bi bi-hand-thumbs-up"></i> <span th:text="${post.likeCount}">0</span></span>
+          <!-- 评论数 -->
+          <span><i class="bi bi-chat-dots"></i> <span th:text="${post.commentCount}">0</span></span>
+          <span class="text-muted">|</span>
+          <!-- 发布时间 -->
+          <!-- th:if：时间不为空时显示 -->
+          <!-- #temporals.format：日期格式化 -->
+          <span><i class="bi bi-clock"></i> <span th:if="${post.createdAt != null}" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm')}">时间</span></span>
+        </div>
+      </div>
+    </th:block>
+
+    <!-- ---------- 空状态提示 ---------- -->
+    <!-- th:if：当搜索结果为空时显示空状态提示 -->
+    <th:block th:if="${posts == null or posts.isEmpty()}">
+      <div class="empty-state">
+        <i class="bi bi-search d-block"></i>
+        <!-- th:text：显示搜索关键词 -->
+        <p class="fs-5" th:text="#{search.noResults(${query})}">未找到与 "<strong>关键词</strong>" 相关的文章</p>
+        <!-- 搜索建议 -->
+        <p class="text-muted" th:text="#{search.tryOtherKeywords}">请尝试使用其他关键词搜索</p>
+        <!-- 引导用户浏览文章 -->
+        <a th:href="@{/}" class="btn btn-primary-custom mt-2">
+          <i class="bi bi-house-door"></i> <span th:text="#{home.publishPost}">浏览文章</span>
+        </a>
+      </div>
+    </th:block>
+  </div>
+</div>
+
+<!-- ==================== 引入页脚片段 ==================== -->
+<!-- th:replace：替换为layout模板中的footer片段 -->
+<th:block th:replace="~{layout :: footer}"></th:block>
+
+<!-- 引入Bootstrap 5 JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

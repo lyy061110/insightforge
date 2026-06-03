@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- 页面标题：动态显示文章标题 -->
+  <title th:text="${post.title} + ' - ' + #{postDetail.title}">文章详情 - InsightForge</title>
+
+  <!-- Bootstrap CSS框架 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Bootstrap Icons图标库 -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- 自定义样式 -->
+  <style>
+    /* ==================== CSS变量定义 ==================== */
+    :root {
+      --primary-dark: #1a2a4a;    /* 主色调深色 */
+      --primary: #1e3a6e;          /* 主色调 */
+      --primary-light: #2c5aa0;    /* 主色调浅色 */
+      --accent: #4a8fe7;           /* 强调色 */
+      --bg-light: #f5f7fa;         /* 背景浅色 */
+      --white: #ffffff;            /* 白色 */
+      --text-dark: #1a1a2e;        /* 文字深色 */
+      --text-muted: #6c757d;       /* 次要文字颜色 */
+      --border: #dee2e6;           /* 边框颜色 */
+      --danger: #dc3545;           /* 危险色 */
+      --warning: #ffc107;          /* 警告色 */
+      --success: #198754;          /* 成功色 */
+    }
+
+    /* ==================== 全局样式 ==================== */
+    body {
+      background-color: var(--bg-light);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: var(--text-dark);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ==================== 导航栏样式 ==================== */
+    .navbar-custom {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .navbar-custom .navbar-brand {
+      font-weight: 700;
+      font-size: 1.5rem;
+      color: var(--white) !important;
+      letter-spacing: 0.5px;
+    }
+
+    .navbar-custom .navbar-brand i {
+      color: var(--accent);
+      margin-right: 6px;
+    }
+
+    .navbar-custom .nav-link {
+      color: rgba(255, 255, 255, 0.85) !important;
+      font-weight: 500;
+      transition: color 0.2s;
+      padding: 0.5rem 1rem;
+    }
+
+    .navbar-custom .nav-link:hover {
+      color: var(--white) !important;
+    }
+
+    .navbar-custom .nav-link i {
+      margin-right: 4px;
+    }
+
+    .navbar-custom .navbar-toggler {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .navbar-custom .navbar-toggler-icon {
+      background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255,255,255,0.8)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* ==================== 主内容区域样式 ==================== */
+    .main-content {
+      flex: 1;
+      padding-top: 1.5rem;
+      padding-bottom: 3rem;
+    }
+
+    /* ==================== 页脚样式 ==================== */
+    .footer-custom {
+      background: var(--primary-dark);
+      color: rgba(255, 255, 255, 0.7);
+      padding: 1rem 0;
+      text-align: center;
+      font-size: 0.875rem;
+      margin-top: auto;
+    }
+
+    /* ==================== 文章详情卡片样式 ==================== */
+    .detail-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .detail-card .post-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 0.75rem;
+    }
+
+    .detail-card .post-meta {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .detail-card .post-content {
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text-dark);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      margin-bottom: 1.5rem;
+    }
+
+    /* ==================== 分类标签样式 ==================== */
+    .category-badge {
+      background: var(--primary-light);
+      color: var(--white);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 2px 10px;
+      border-radius: 12px;
+      text-decoration: none;
+    }
+
+    .category-badge:hover {
+      background: var(--accent);
+      color: var(--white);
+    }
+
+    /* ==================== 操作按钮栏样式 ==================== */
+    .action-bar {
+      border-top: 1px solid var(--border);
+      padding-top: 1rem;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* 点赞按钮样式 */
+    .btn-like {
+      background: #e8f0fe;
+      color: var(--primary);
+      border: 1px solid #c5d5ea;
+    }
+
+    .btn-like:hover {
+      background: #d0e0f8;
+    }
+
+    /* 取消点赞按钮样式 */
+    .btn-unlike {
+      background: #fce4ec;
+      color: #c62828;
+      border: 1px solid #ef9a9a;
+    }
+
+    .btn-unlike:hover {
+      background: #f8bbd0;
+    }
+
+    /* 收藏按钮样式 */
+    .btn-save {
+      background: #e8f5e9;
+      color: #2e7d32;
+      border: 1px solid #a5d6a7;
+    }
+
+    .btn-save:hover {
+      background: #c8e6c9;
+    }
+
+    /* 取消收藏按钮样式 */
+    .btn-unsave {
+      background: #f3e5f5;
+      color: #6a1b9a;
+      border: 1px solid #ce93d8;
+    }
+
+    .btn-unsave:hover {
+      background: #e1bee7;
+    }
+
+    /* 举报按钮样式 */
+    .btn-report {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffc107;
+    }
+
+    .btn-report:hover {
+      background: #ffe69c;
+    }
+
+    /* 删除按钮样式 */
+    .btn-delete {
+      background: #f8d7da;
+      color: #842029;
+      border: 1px solid #f1aeb5;
+    }
+
+    .btn-delete:hover {
+      background: #f1aeb5;
+    }
+
+    /* ==================== 文章被举报横幅样式 ==================== */
+    .flagged-banner {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      color: #856404;
+      font-weight: 500;
+      margin-bottom: 1rem;
+    }
+
+    .flagged-banner i {
+      margin-right: 0.5rem;
+    }
+
+    /* ==================== 评论区样式 ==================== */
+    .comment-section {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .comment-section .section-title {
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--accent);
+    }
+
+    /* 单条评论样式 */
+    .comment-item {
+      border-bottom: 1px solid #f0f0f0;
+      padding: 0.75rem 0;
+    }
+
+    .comment-item:last-child {
+      border-bottom: none;
+    }
+
+    .comment-item .comment-user {
+      font-weight: 600;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .comment-item .comment-time {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .comment-item .comment-content {
+      margin-top: 0.25rem;
+      color: var(--text-dark);
+    }
+
+    /* ==================== 空状态样式 ==================== */
+    .empty-state {
+      text-align: center;
+      padding: 3rem 0;
+      color: var(--text-muted);
+    }
+
+    .empty-state i {
+      font-size: 3rem;
+      margin-bottom: 1rem;
+    }
+
+    /* ==================== 表单控件样式 ==================== */
+    textarea.form-control:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 0.2rem rgba(74, 143, 231, 0.25);
+    }
+
+    /* 链接样式 */
+    a {
+      color: var(--primary);
+    }
+
+    a:hover {
+      color: var(--primary-light);
+    }
+  </style>
+</head>
+<body>
+
+<!-- 引入公共导航栏组件 -->
+<th:block th:replace="~{layout :: navbar}"></th:block>
+
+<!-- 主内容区域 -->
+<div class="main-content">
+  <div class="container">
+
+    <!-- 文章不存在时的空状态显示 -->
+    <th:block th:if="${post == null}">
+      <div class="empty-state">
+        <i class="bi bi-file-earmark-x d-block"></i>
+        <p class="fs-5" th:text="#{postDetail.notFound}">文章不存在或已被删除</p>
+        <a th:href="@{/}" class="btn btn-primary-custom mt-2">
+          <i class="bi bi-arrow-left"></i> <span th:text="#{postDetail.backHome}">返回首页</span>
+        </a>
+      </div>
+    </th:block>
+
+    <!-- 文章存在时显示详情内容 -->
+    <th:block th:if="${post != null}">
+
+      <!-- 文章被举报标记横幅：当文章状态为FLAGGED时显示 -->
+      <div class="flagged-banner d-flex align-items-center" th:if="${post.status == 'FLAGGED'}">
+        <i class="bi bi-exclamation-triangle-fill fs-5"></i>
+        <span th:text="#{postDetail.flaggedBanner}">此文章已被举报，正在审核中。</span>
+      </div>
+
+      <!-- 文章详情卡片 -->
+      <div class="detail-card">
+        <!-- 文章标题 -->
+        <h1 class="post-title" th:text="${post.title}">文章标题</h1>
+
+        <!-- 文章元信息：作者、分类、发布时间、点赞数、评论数 -->
+        <div class="post-meta d-flex flex-wrap align-items-center gap-2">
+          <!-- 作者信息 -->
+          <span><i class="bi bi-person-circle"></i> <span th:text="${post.authorName} ?: 'Anonymous'">作者</span></span>
+          <span class="text-muted">|</span>
+          <!-- 分类标签（可点击跳转到分类页面） -->
+          <a th:href="@{/category/{name}(name=${post.category})}" class="category-badge" th:text="${post.category}" th:if="${post.category != null}">分类</a>
+          <span class="text-muted">|</span>
+          <!-- 发布时间 -->
+          <span><i class="bi bi-clock"></i> <span th:if="${post.createdAt != null}" th:text="${#temporals.format(post.createdAt, 'yyyy-MM-dd HH:mm:ss')}">发布时间</span><span th:unless="${post.createdAt != null}" th:text="#{postDetail.justNow}">刚刚</span></span>
+          <span class="text-muted">|</span>
+          <!-- 点赞数 -->
+          <span><i class="bi bi-hand-thumbs-up"></i> <span th:text="${post.likeCount}">0</span> <span th:text="#{postDetail.likes}">赞</span></span>
+          <!-- 评论数 -->
+          <span><i class="bi bi-chat-dots"></i> <span th:text="${post.commentCount}">0</span> <span th:text="#{postDetail.comments}">评论</span></span>
+        </div>
+
+        <!-- 文章正文内容（支持HTML渲染） -->
+        <div class="post-content" th:utext="${postContentHtml}">文章内容</div>
+
+        <!-- 操作按钮栏：点赞、收藏、举报、删除 -->
+        <div class="action-bar">
+          <!-- 点赞按钮：未点赞状态显示 -->
+          <form th:action="@{/post/{id}/like(id=${post.id})}" method="post" class="d-inline" th:if="${!isLiked}">
+            <button type="submit" class="btn btn-like btn-sm">
+              <i class="bi bi-hand-thumbs-up"></i> Like (<span th:text="${post.likeCount}">0</span>)
+            </button>
+          </form>
+          <!-- 取消点赞按钮：已点赞状态显示 -->
+          <form th:action="@{/post/{id}/unlike(id=${post.id})}" method="post" class="d-inline" th:if="${isLiked}">
+            <button type="submit" class="btn btn-unlike btn-sm">
+              <i class="bi bi-hand-thumbs-down"></i> Unlike
+            </button>
+          </form>
+
+          <!-- 收藏按钮：未收藏状态显示 -->
+          <form th:action="@{/post/{id}/save(id=${post.id})}" method="post" class="d-inline" th:if="${!isSaved}">
+            <button type="submit" class="btn btn-save btn-sm">
+              <i class="bi bi-bookmark"></i> Save
+            </button>
+          </form>
+          <!-- 取消收藏按钮：已收藏状态显示 -->
+          <form th:action="@{/post/{id}/unsave(id=${post.id})}" method="post" class="d-inline" th:if="${isSaved}">
+            <button type="submit" class="btn btn-unsave btn-sm">
+              <i class="bi bi-bookmark-fill"></i> Unsave
+            </button>
+          </form>
+
+          <!-- 举报按钮：点击打开举报模态框 -->
+          <button type="button" class="btn btn-report btn-sm" data-bs-toggle="modal" data-bs-target="#reportModal">
+            <i class="bi bi-flag"></i> Report
+          </button>
+
+          <!-- 删除按钮：带确认提示 -->
+          <form th:action="@{/post/{id}/delete(id=${post.id})}" method="post" class="d-inline" th:onsubmit="'return confirm(\'' + #{postDetail.deleteConfirm} + '\')'">
+            <button type="submit" class="btn btn-delete btn-sm">
+              <i class="bi bi-trash"></i> <span th:text="#{postDetail.deleteBtn}">Delete</span>
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <!-- 评论区 -->
+      <div class="comment-section">
+        <!-- 评论区标题 -->
+        <h5 class="section-title"><i class="bi bi-chat-square-text"></i> <span th:text="#{postDetail.commentSection}">评论</span> (<span th:text="${comments != null ? #lists.size(comments) : 0}">0</span>)</h5>
+
+        <!-- 评论列表：有评论时显示 -->
+        <th:block th:if="${comments != null and !comments.isEmpty()}">
+          <div class="comment-item" th:each="comment : ${comments}">
+            <!-- 评论用户名 -->
+            <div class="comment-user">
+              <i class="bi bi-person-circle"></i> <span th:text="${comment.username} ?: 'Anonymous'">用户名</span>
+            </div>
+            <!-- 评论内容 -->
+            <div class="comment-content" th:text="${comment.content}">评论内容</div>
+            <!-- 评论时间 -->
+            <div class="comment-time">
+              <i class="bi bi-clock"></i> <span th:if="${comment.createdAt != null}" th:text="${#temporals.format(comment.createdAt, 'yyyy-MM-dd HH:mm')}">时间</span><span th:unless="${comment.createdAt != null}">刚刚</span>
+            </div>
+          </div>
+        </th:block>
+
+        <!-- 无评论时的提示 -->
+        <th:block th:if="${comments == null or comments.isEmpty()}">
+          <p class="text-muted small" th:text="#{postDetail.noComments}">暂无评论，来发表第一条评论吧！</p>
+        </th:block>
+
+        <!-- 添加评论表单 -->
+        <div class="mt-3 pt-3 border-top">
+          <h6 class="fw-bold mb-2"><i class="bi bi-pencil-square"></i> <span th:text="#{postDetail.addComment}">添加评论</span></h6>
+          <form th:action="@{/post/{id}/comment(id=${post.id})}" method="post">
+            <div class="mb-2">
+              <textarea class="form-control" name="content" rows="3" th:placeholder="#{postDetail.commentPlaceholder}" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary-custom btn-sm">
+              <i class="bi bi-send"></i> <span th:text="#{postDetail.submitComment}">提交评论</span>
+            </button>
+          </form>
+        </div>
+      </div>
+    </th:block>
+  </div>
+</div>
+
+<!-- 举报文章模态框 -->
+<div class="modal fade" id="reportModal" tabindex="-1" aria-labelledby="reportModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form th:action="@{/post/{id}/report(id=${post.id})}" method="post">
+        <!-- 模态框头部 -->
+        <div class="modal-header">
+          <h5 class="modal-title fw-bold" id="reportModalLabel">
+            <i class="bi bi-flag-fill text-warning"></i> <span th:text="#{postDetail.reportModalTitle}">举报文章</span>
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <!-- 模态框主体 -->
+        <div class="modal-body">
+          <!-- 举报原因选择 -->
+          <div class="mb-3">
+            <label for="reportReason" class="form-label fw-semibold" th:text="#{postDetail.reportReason}">举报原因</label>
+            <select class="form-select" id="reportReason" name="reason" required>
+              <option value="" th:text="#{postDetail.reportReasonPlaceholder}">-- 请选择原因 --</option>
+              <option value="SPAM" th:text="#{postDetail.reportReasonSpam}">SPAM - 垃圾内容</option>
+              <option value="HARASSMENT" th:text="#{postDetail.reportReasonHarassment}">HARASSMENT - 骚扰信息</option>
+              <option value="MISINFORMATION" th:text="#{postDetail.reportReasonMisinformation}">MISINFORMATION - 虚假信息</option>
+              <option value="OTHER" th:text="#{postDetail.reportReasonOther}">OTHER - 其他原因</option>
+            </select>
+          </div>
+          <!-- 详细描述输入 -->
+          <div class="mb-3">
+            <label for="reportDescription" class="form-label fw-semibold" th:text="#{postDetail.reportDescription}">详细描述</label>
+            <textarea class="form-control" id="reportDescription" name="description" rows="4" th:placeholder="#{postDetail.reportDescriptionPlaceholder}" required></textarea>
+          </div>
+        </div>
+        <!-- 模态框底部按钮 -->
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" th:text="#{postDetail.cancel}">取消</button>
+          <button type="submit" class="btn btn-warning">
+            <i class="bi bi-flag"></i> <span th:text="#{postDetail.submitReport}">提交举报</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- 引入公共页脚组件 -->
+<th:block th:replace="~{layout :: footer}"></th:block>
+
+<!-- Bootstrap JavaScript -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

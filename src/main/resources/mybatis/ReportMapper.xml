@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    ReportMapper.xml - 举报数据访问映射器
+    
+    功能说明：
+    - 管理帖子举报记录的增删改查操作
+    - 支持按状态查询举报记录（用于管理员审核）
+    - 支持按帖子ID查询举报记录
+    - 关联查询用户和帖子信息
+-->
+<mapper namespace="com.insightforge.mapper.ReportMapper">
+
+    <!-- 举报结果映射：将数据库字段映射到Report实体类属性 -->
+    <resultMap id="reportResultMap" type="com.insightforge.entity.Report">
+        <id property="id" column="id"/>                          <!-- 举报记录ID，主键 -->
+        <result property="postId" column="post_id"/>             <!-- 被举报的帖子ID -->
+        <result property="userId" column="user_id"/>             <!-- 举报者用户ID -->
+        <result property="reason" column="reason"/>              <!-- 举报原因 -->
+        <result property="description" column="description"/>    <!-- 举报详细描述 -->
+        <result property="status" column="status"/>              <!-- 举报状态（PENDING/RESOLVED等） -->
+        <result property="severity" column="severity"/>          <!-- 严重程度 -->
+        <result property="createdAt" column="created_at"/>       <!-- 创建时间 -->
+        <result property="username" column="username"/>          <!-- 举报者用户名（关联查询） -->
+        <result property="postTitle" column="post_title"/>      <!-- 被举报帖子标题（关联查询） -->
+    </resultMap>
+
+    <!-- 根据ID查询举报详情，关联查询用户名和帖子标题 -->
+    <select id="findById" resultMap="reportResultMap">
+        SELECT r.id, r.post_id, r.user_id, r.reason, r.description,
+               r.status, r.severity, r.created_at,
+               u.username, p.title AS post_title
+        FROM reports r
+        JOIN users u ON r.user_id = u.id
+        JOIN posts p ON r.post_id = p.id
+        WHERE r.id = #{id}
+    </select>
+
+    <!-- 查询所有举报记录，关联查询用户名和帖子标题 -->
+    <select id="findAll" resultMap="reportResultMap">
+        SELECT r.id, r.post_id, r.user_id, r.reason, r.description,
+               r.status, r.severity, r.created_at,
+               u.username, p.title AS post_title
+        FROM reports r
+        JOIN users u ON r.user_id = u.id
+        JOIN posts p ON r.post_id = p.id
+    </select>
+
+    <!-- 根据状态查询举报记录（用于管理员筛选待处理的举报） -->
+    <select id="findByStatus" resultMap="reportResultMap">
+        SELECT r.id, r.post_id, r.user_id, r.reason, r.description,
+               r.status, r.severity, r.created_at,
+               u.username, p.title AS post_title
+        FROM reports r
+        JOIN users u ON r.user_id = u.id
+        JOIN posts p ON r.post_id = p.id
+        WHERE r.status = #{status}
+    </select>
+
+    <!-- 根据帖子ID查询该帖子的所有举报记录 -->
+    <select id="findByPostId" resultMap="reportResultMap">
+        SELECT r.id, r.post_id, r.user_id, r.reason, r.description,
+               r.status, r.severity, r.created_at,
+               u.username, p.title AS post_title
+        FROM reports r
+        JOIN users u ON r.user_id = u.id
+        JOIN posts p ON r.post_id = p.id
+        WHERE r.post_id = #{postId}
+    </select>
+
+    <!-- 根据帖子ID和用户ID查询举报记录（用于判断用户是否已举报该帖子） -->
+    <select id="findByPostAndUser" resultMap="reportResultMap">
+        SELECT r.id, r.post_id, r.user_id, r.reason, r.description,
+               r.status, r.severity, r.created_at,
+               u.username, p.title AS post_title
+        FROM reports r
+        JOIN users u ON r.user_id = u.id
+        JOIN posts p ON r.post_id = p.id
+        WHERE r.post_id = #{postId} AND r.user_id = #{userId}
+    </select>
+
+    <!-- 新增举报记录，useGeneratedKeys返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO reports (post_id, user_id, reason, description, status, severity)
+        VALUES (#{postId}, #{userId}, #{reason}, #{description}, #{status}, #{severity})
+    </insert>
+
+    <!-- 更新举报状态（用于管理员处理举报后更新状态） -->
+    <update id="updateStatus">
+        UPDATE reports
+        SET status = #{status}
+        WHERE id = #{id}
+    </update>
+
+    <!-- 统计帖子的举报数量 -->
+    <select id="countByPostId" resultType="int">
+        SELECT COUNT(*)
+        FROM reports
+        WHERE post_id = #{postId}
+    </select>
+
+</mapper>

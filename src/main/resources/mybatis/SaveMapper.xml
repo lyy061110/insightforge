@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--
+    SaveMapper.xml - 收藏数据访问映射器
+    
+    功能说明：
+    - 管理帖子收藏记录的增删改查操作
+    - 支持查询用户的收藏列表
+    - 支持检查用户是否已收藏某帖子
+-->
+<mapper namespace="com.insightforge.mapper.SaveMapper">
+
+    <!-- 收藏结果映射：将数据库字段映射到Save实体类属性 -->
+    <resultMap id="saveResultMap" type="com.insightforge.entity.Save">
+        <id property="id" column="id"/>                      <!-- 收藏记录ID，主键 -->
+        <result property="postId" column="post_id"/>        <!-- 被收藏的帖子ID -->
+        <result property="userId" column="user_id"/>        <!-- 收藏用户ID -->
+        <result property="createdAt" column="created_at"/>  <!-- 收藏时间 -->
+    </resultMap>
+
+    <!-- 根据用户ID查询其收藏的所有帖子 -->
+    <select id="findByUserId" resultMap="saveResultMap">
+        SELECT s.id, s.post_id, s.user_id, s.created_at
+        FROM saves s
+        WHERE s.user_id = #{userId}
+    </select>
+
+    <!-- 根据帖子ID和用户ID查询收藏记录（用于判断用户是否已收藏） -->
+    <select id="findByPostAndUser" resultMap="saveResultMap">
+        SELECT id, post_id, user_id, created_at
+        FROM saves
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </select>
+
+    <!-- 新增收藏记录，useGeneratedKeys返回自增主键 -->
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO saves (post_id, user_id)
+        VALUES (#{postId}, #{userId})
+    </insert>
+
+    <!-- 删除收藏记录（取消收藏） -->
+    <delete id="delete">
+        DELETE FROM saves
+        WHERE post_id = #{postId} AND user_id = #{userId}
+    </delete>
+
+</mapper>
